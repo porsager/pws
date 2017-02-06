@@ -78,11 +78,12 @@
       }
 
       connection.onclose = function(event) {
+        connection.onclose = null
         event.reconnectDelay = Math.ceil(reconnect())
         api.onclose.call(connection, event)
       }
 
-      connection.onerror = function() {
+      connection.onerror = function(event) {
         api.onerror.apply(connection, arguments)
       }
 
@@ -97,9 +98,18 @@
         return
 
       clearTimeout(heartbeatTimer)
-      heartbeatTimer = setTimeout(function() {
-        connection.close()
-      }, api.pingTimeout)
+      heartbeatTimer = setTimeout(timedOut, api.pingTimeout)
+    }
+
+    function timedOut() {
+      const event = typeof window != 'undefined' && window.CloseEvent
+                    ? new window.CloseEvent()
+                    : new Error()
+
+      event.code = 4663
+      event.reason = 'No heartbeat received in due time'
+      connection.onclose(event)
+      connection.close(event.code, event.reason)
     }
 
     function reconnect() {
