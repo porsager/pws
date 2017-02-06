@@ -1,5 +1,8 @@
 # PWS - PersistentWebSocket
 
+```
+npm install pws -S
+```
 WebSockets are great, but as soon as you start having a need for an always online connection (reconnecting) you either have to roll your own or pull in a big library like [`socket.io`](https://github.com/socketio/socket.io) or [`primus`](https://github.com/primus/primus). Both are great libraries, but maybe not really necessary for what you're doing.
 
 This module gives you a reconnecting websocket to use in the browser or in node simply by switching out `new WebSocket` with `new PersistentWebSocket`.
