@@ -38,7 +38,7 @@
       maxRetries: 0,
       retries: 0,
       nextReconnectDelay: function reconnectTimeout(retries) {
-        return Math.min(Math.random() * Math.pow(2, retries) * 1000, api.maxTimeout)
+        return Math.min((1 + Math.random()) * Math.pow(1.5, retries) * 1000, api.maxTimeout)
       },
       send: function() {
         connection.send.apply(connection, arguments)
