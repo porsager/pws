@@ -78,7 +78,7 @@
       }
 
       connection.onclose = function(event) {
-        connection.onclose = null
+        connection.onclose = noop
         event.reconnectDelay = Math.ceil(reconnect())
         api.onclose.call(connection, event)
       }
@@ -130,10 +130,10 @@
     }
 
     function clean(connection) {
-      connection.onclose = null
-      connection.onopen = null
-      connection.onerror = null
-      connection.onmessage = null
+      connection.onclose = noop
+      connection.onopen = noop
+      connection.onerror = noop
+      connection.onmessage = noop
 
       connection.close()
     }
