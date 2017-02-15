@@ -5,8 +5,14 @@
       protocols = null
     }
 
-    if (!WebSocket)
-      WebSocket = typeof window !== 'undefined' && window.WebSocket
+    if (!WebSocket) {
+      if (typeof window !== 'undefined') {
+        WebSocket = window.WebSocket
+        typeof window !== 'undefined'
+          && typeof window.addEventListener === 'function'
+          && window.addEventListener('online', connect)
+      }
+    }
 
     if (!WebSocket)
       throw new Error('Please supply a websocket library to use')
@@ -66,31 +72,42 @@
         clean(connection)
 
       reconnecting = false
+
       connection = new WebSocket(api.url, protocols)
 
       if (binaryType)
         connection.binaryType = binaryType
 
-      connection.onopen = function() {
-        heartbeat()
-        api.retries = 0
-        api.onopen.apply(connection, arguments)
-      }
+      connection.onclose = onclose
+      connection.onerror = onerror
+      connection.onopen = onopen
+      connection.onmessage = onmessage
+    }
 
-      connection.onclose = function(event) {
-        connection.onclose = noop
-        event.reconnectDelay = Math.ceil(reconnect())
-        api.onclose.call(connection, event)
-      }
+    function onclose(event) {
+      connection.onclose = noop
+      event.reconnectDelay = Math.ceil(reconnect())
+      api.onclose.call(connection, event)
+    }
 
-      connection.onerror = function(event) {
-        api.onerror.apply(connection, arguments)
-      }
+    function onerror(event) {
+      if (!event)
+        event = new Error('UnknownError')
 
-      connection.onmessage = function() {
-        heartbeat()
-        api.onmessage.apply(connection, arguments)
-      }
+      event.reconnectDelay = Math.ceil(reconnect())
+      api.onclose.call(connection, event)
+      api.onerror(event)
+    }
+
+    function onopen() {
+      heartbeat()
+      api.retries = 0
+      api.onopen.apply(connection, arguments)
+    }
+
+    function onmessage() {
+      heartbeat()
+      api.onmessage.apply(connection, arguments)
     }
 
     function heartbeat() {
@@ -108,15 +125,19 @@
 
       event.code = 4663
       event.reason = 'No heartbeat received in due time'
-      connection.onclose(event)
+
+      onclose(event)
       connection.close(event.code, event.reason)
     }
 
     function reconnect() {
       if (reconnecting)
-        return
+        return Date.now() - reconnecting
 
-      reconnecting = true
+      if (connection)
+        clean(connection)
+
+      reconnecting = Date.now()
       api.retries++
 
       if (api.maxRetries && api.retries >= api.maxRetries)
