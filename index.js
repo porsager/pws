@@ -1,8 +1,13 @@
 (function() {
-  function PersistentWebSocket(url, protocols, WebSocket) {
+  function PersistentWebSocket(url, protocols, WebSocket, options) {
     if (typeof protocols === 'function') {
       WebSocket = protocols
-      protocols = null
+      protocols = undefined
+    }
+
+    if (!Array.isArray(protocols) && typeof protocols === 'object') {
+      options = protocols
+      protocols = undefined
     }
 
     if (!WebSocket) {
@@ -16,6 +21,9 @@
 
     if (!WebSocket)
       throw new Error('Please supply a websocket library to use')
+
+    if (!options)
+      options = {}
 
     var connection = null
       , reconnecting = false
@@ -39,11 +47,11 @@
       },
       connect: connect,
       url: url,
-      pingTimeout: 30 * 1000,
-      maxTimeout: 5 * 60 * 1000,
-      maxRetries: 0,
       retries: 0,
-      nextReconnectDelay: function reconnectTimeout(retries) {
+      pingTimeout: options.pingTimeout || 30 * 1000,
+      maxTimeout: options.maxTimeout || 5 * 60 * 1000,
+      maxRetries: options.maxRetries || 0,
+      nextReconnectDelay: options.nextReconnectDelay || function reconnectTimeout(retries) {
         return Math.min((1 + Math.random()) * Math.pow(1.5, retries) * 1000, api.maxTimeout)
       },
       send: function() {
@@ -73,7 +81,7 @@
 
       reconnecting = false
 
-      connection = new WebSocket(api.url, protocols)
+      connection = new WebSocket(api.url, protocols, options)
 
       if (binaryType)
         connection.binaryType = binaryType
