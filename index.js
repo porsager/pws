@@ -10,6 +10,11 @@
       protocols = undefined
     }
 
+    if (typeof WebSocket === 'object') {
+      options = WebSocket
+      WebSocket = undefined
+    }
+
     if (!WebSocket) {
       if (typeof window !== 'undefined') {
         WebSocket = window.WebSocket
