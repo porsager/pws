@@ -53,7 +53,7 @@
       connect: connect,
       url: url,
       retries: 0,
-      pingTimeout: options.pingTimeout || 30 * 1000,
+      pingTimeout: 'pingTimeout' in options ? options.pingTimeout : 30 * 1000,
       maxTimeout: options.maxTimeout || 5 * 60 * 1000,
       maxRetries: options.maxRetries || 0,
       nextReconnectDelay: options.nextReconnectDelay || function reconnectTimeout(retries) {
