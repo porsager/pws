@@ -37,10 +37,10 @@
       , binaryType = null
 
     var api = {
-      CONNECTING: WebSocket.CONNECTING,
-      OPEN: WebSocket.OPEN,
-      CLOSING: WebSocket.CLOSING,
-      CLOSED: WebSocket.CLOSED,
+      CONNECTING: 'CONNECTING' in WebSocket ? WebSocket.CONNECTING : 0,
+      OPEN: 'OPEN' in WebSocket ? WebSocket.OPEN : 1,
+      CLOSING: 'CLOSING' in WebSocket ? WebSocket.CLOSING : 2,
+      CLOSED: 'CLOSED' in WebSocket ? WebSocket.CLOSED : 3,
       get readyState() { return connection.readyState },
       get protocol() { return connection.protocol },
       get extensions() { return connection.extensions },
