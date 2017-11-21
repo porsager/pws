@@ -1,4 +1,4 @@
-(function() {
+;(function() {
   function PersistentWebSocket(url, protocols, WebSocket, options) {
     if (typeof protocols === 'function') {
       WebSocket = protocols
