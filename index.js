@@ -78,7 +78,7 @@
     function connect(url) {
       clearTimeout(reconnectTimer)
 
-      if (url)
+      if (typeof url === 'string')
         api.url = url
 
       if (connection)
