@@ -132,12 +132,15 @@
     }
 
     function timedOut() {
-      const event = typeof window != 'undefined' && window.CloseEvent
-                    ? new window.CloseEvent()
-                    : new Error()
+      const code = 4663
+          , reason = 'No heartbeat received in due time'
 
-      event.code = 4663
-      event.reason = 'No heartbeat received in due time'
+      const event = typeof window != 'undefined' && window.CloseEvent
+        ? new window.CloseEvent('HeartbeatTimeout', { wasClean: true, code, reason })
+        : new Error('HeartbeatTimeout')
+
+      event.code = code
+      event.reason = reason
 
       onclose(event)
       connection.close(event.code, event.reason)
