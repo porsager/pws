@@ -1,13 +1,18 @@
 {
   "name": "pws",
-  "version": "0.4.0",
+  "version": "1.0.0",
   "description": "A Persistent WebSocket wrapper",
   "main": "index.js",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/porsager/pws.git"
   },
-  "keywords": ["websocket", "reconnect", "ping", "timeout"],
+  "keywords": [
+    "websocket",
+    "reconnect",
+    "ping",
+    "timeout"
+  ],
   "author": "Rasmus Porsager <rasmus@porsager.com>",
   "license": "MIT",
   "bugs": {
