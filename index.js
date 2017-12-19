@@ -35,6 +35,7 @@
       , reconnectTimer = null
       , heartbeatTimer = null
       , binaryType = null
+      , closed = false
 
     var api = {
       CONNECTING: 'CONNECTING' in WebSocket ? WebSocket.CONNECTING : 0,
@@ -63,6 +64,7 @@
         connection.send.apply(connection, arguments)
       },
       close: function() {
+        closed = true
         connection.close.apply(connection, arguments)
       },
       onopen: noop,
@@ -76,6 +78,7 @@
     }
 
     function connect(url) {
+      closed = false
       clearTimeout(reconnectTimer)
 
       if (typeof url === 'string')
@@ -99,7 +102,8 @@
 
     function onclose(event) {
       connection.onclose = noop
-      event.reconnectDelay = Math.ceil(reconnect())
+      if (!closed)
+        event.reconnectDelay = Math.ceil(reconnect())
       api.onclose.call(connection, event)
     }
 
