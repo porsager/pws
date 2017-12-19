@@ -64,6 +64,7 @@
         connection.send.apply(connection, arguments)
       },
       close: function() {
+        clearTimeout(reconnectTimer)
         closed = true
         connection.close.apply(connection, arguments)
       },
