@@ -141,7 +141,7 @@
           , reason = 'No heartbeat received in due time'
 
       const event = typeof window != 'undefined' && window.CloseEvent
-        ? new window.CloseEvent('HeartbeatTimeout', { wasClean: true, code, reason })
+        ? new window.CloseEvent('HeartbeatTimeout', { wasClean: true, code: code, reason: reason })
         : new Error('HeartbeatTimeout')
 
       event.code = code
