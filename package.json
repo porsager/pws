@@ -3,10 +3,7 @@
   "version": "1.0.1",
   "description": "A Persistent WebSocket wrapper",
   "main": "index.js",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/porsager/pws.git"
-  },
+  "repository": "porsager/pws",
   "keywords": [
     "websocket",
     "reconnect",
@@ -15,8 +12,5 @@
   ],
   "author": "Rasmus Porsager <rasmus@porsager.com>",
   "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/porsager/pws/issues"
-  },
   "homepage": "https://github.com/porsager/pws#readme"
 }
