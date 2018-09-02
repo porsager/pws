@@ -1,6 +1,6 @@
 {
   "name": "pws",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "A Persistent WebSocket wrapper",
   "main": "index.js",
   "repository": "porsager/pws",
