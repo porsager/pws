@@ -15,5 +15,3 @@ It behaves the same as a regular browser WebSocket, but reconnects automatically
 It also expects a heartbeat (any message will do) from the server every 30 seconds, or else it will close the connection and begin reconnecting (configurable). 
 
 The reason for doing a reconnect on a missing heartbeat from the server is because WebSockets doesn't close if the connection is not closed properly. This can often lead to stale connections. A server can implement the ping>pong from the WebSocket specification to ensure connections are still alive, but this doesn't solve the problem for clients. If doing a ping from the server it might be beneficial to include a timestamp and get some information on the connections latency.
-
-Note: `on` and `addEventListener` are not supported. Use `onopen` `onclose` `onerror` and `onmessage` instead.
