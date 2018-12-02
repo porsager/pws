@@ -80,10 +80,10 @@
         closed = true;
         connection.close.apply(connection, arguments);
       },
-      onopen: noop,
-      onclose: noop,
-      onerror: noop,
-      onmessage: noop
+      onopen: options.onopen,
+      onmessage: options.onmessage,
+      onclose:  options.onclose,
+      onerror: options.onerror
     };
 
     pws.addEventListener = pws.on = function (event, fn) {
@@ -106,10 +106,6 @@
 
     return pws
 
-    function noop() {
-      // noop
-    }
-
     function connect(url) {
       closed = false;
       clearTimeout(reconnectTimer);
@@ -122,7 +118,7 @@
 
       reconnecting = false;
 
-      connection = new WebSocket(pws.url, protocols, options);
+      connection = new WebSocket(typeof pws.url === 'function' ? pws.url() : pws.url, protocols, options);
       Object.keys(events).forEach(function (event) {
         events[event].forEach(function (fn) { return (connection.addEventListener || connection.on).call(connection, event, fn); }
         );
@@ -137,14 +133,14 @@
     }
 
     function onclose(event) {
-      pws.onclose.apply(pws, arguments);
-      connection.onclose = noop;
+      pws.onclose && pws.onerror.apply(pws, arguments);
+      connection.onclose = null;
       if (!closed)
         { event.reconnectDelay = Math.ceil(reconnect()); }
     }
 
     function onerror(event) {
-      pws.onerror.apply(pws, arguments);
+      pws.onerror && pws.onerror.apply(pws, arguments);
       if (!event)
         { event = new Error('UnknownError'); }
 
@@ -152,13 +148,13 @@
     }
 
     function onopen(event) {
-      pws.onopen.apply(pws, arguments);
+      pws.onopen && pws.onopen.apply(pws, arguments);
       heartbeat();
       pws.retries = 0;
     }
 
     function onmessage(event) {
-      pws.onmessage.apply(pws, arguments);
+      pws.onmessage && pws.onmessage.apply(pws, arguments);
       heartbeat();
     }
 
@@ -205,10 +201,10 @@
     }
 
     function clean(connection) {
-      connection.onclose = noop;
-      connection.onopen = noop;
-      connection.onerror = noop;
-      connection.onmessage = noop;
+      connection.onclose = null;
+      connection.onopen = null;
+      connection.onerror = null;
+      connection.onmessage = null;
       Object.keys(events).forEach(function (event) {
         events[event].forEach(function (fn) { return (connection.removeEventListener || connection.off).call(connection, event, fn); }
         );

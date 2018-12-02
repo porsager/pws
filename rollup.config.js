@@ -7,11 +7,11 @@ export default [{
     buble()
   ],
   output: [{
-    file: 'lib/index.js',
+    file: 'dist/index.js',
     name: 'PersistentWebSocket',
     format: 'umd'
   }, {
-    file: 'lib/index.esm.js',
+    file: 'dist/index.esm.js',
     format: 'esm'
   }]
 }, {
@@ -21,7 +21,7 @@ export default [{
     terser.terser()
   ],
   output: [{
-    file: 'lib/index.min.js',
+    file: 'dist/index.min.js',
     name: 'PersistentWebSocket',
     format: 'umd'
   }]
@@ -32,7 +32,7 @@ export default [{
     terser.terser()
   ],
   output: [{
-    file: 'lib/index.esm.min.js',
+    file: 'dist/index.esm.min.js',
     format: 'esm'
   }]
 }]
