@@ -27,7 +27,7 @@ You can also use PWS with the nodejs WebSocket library [ws](https://github.com/w
 
 ```
 const WebSocket = require('ws')
-    , Pws = require('ws')
+    , Pws = require('pws')
 
 const pws = Pws(url, WebSocket)
 
