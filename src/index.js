@@ -82,11 +82,11 @@ export default function(url, protocols, WebSocket, options) {
 
   pws.addEventListener = pws.on = (event, fn) => {
     events[event].push(fn)
-    connection && (connection.addEventListener || connection.on).call(connection, event, fn)
+    connection && (connection.on || connection.addEventListener).call(connection, event, fn)
   }
   pws.removeEventListener = pws.off = (event, fn) => {
     events[event].splice(events[event].indexOf(fn), 1)
-    connection && (connection.removeEventListener || connection.off).call(connection, event, fn)
+    connection && (connection.off || connection.removeEventListener).call(connection, event, fn)
   }
   pws.once = (event, fn) => {
     pws.addEventListener(event, function self(e) {
@@ -115,7 +115,7 @@ export default function(url, protocols, WebSocket, options) {
     connection = new WebSocket(typeof pws.url === 'function' ? pws.url() : pws.url, protocols, options)
     Object.keys(events).forEach(event => {
       events[event].forEach(fn =>
-        (connection.addEventListener || connection.on).call(connection, event, fn)
+        (connection.on || connection.addEventListener).call(connection, event, fn)
       )
     })
     if (binaryType)
@@ -202,7 +202,7 @@ export default function(url, protocols, WebSocket, options) {
     connection.onmessage = null
     Object.keys(events).forEach(event => {
       events[event].forEach(fn =>
-        (connection.removeEventListener || connection.off).call(connection, event, fn)
+        (connection.off || connection.removeEventListener).call(connection, event, fn)
       )
     })
     connection.close()
