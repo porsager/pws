@@ -112,7 +112,7 @@ export default function(url, protocols, WebSocket, options) {
 
     reconnecting = false
 
-    connection = new WebSocket(typeof pws.url === 'function' ? pws.url() : pws.url, protocols, options)
+    connection = new WebSocket(typeof pws.url === 'function' ? pws.url(pws) : pws.url, protocols, options)
     Object.keys(events).forEach(event => {
       events[event].forEach(fn =>
         (connection.on || connection.addEventListener).call(connection, event, fn)
