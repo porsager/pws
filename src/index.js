@@ -198,7 +198,7 @@ export default function(url, protocols, WebSocket, options) {
   function clean(connection) {
     connection.onclose = null
     connection.onopen = null
-    connection.onerror = null
+    connection.onerror = () => { /* Discard errors when cleaning up */ }
     connection.onmessage = null
     Object.keys(events).forEach(event => {
       events[event].forEach(fn =>

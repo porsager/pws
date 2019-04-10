@@ -203,7 +203,7 @@
     function clean(connection) {
       connection.onclose = null;
       connection.onopen = null;
-      connection.onerror = null;
+      connection.onerror = function () { /* Discard errors when cleaning up */ };
       connection.onmessage = null;
       Object.keys(events).forEach(function (event) {
         events[event].forEach(function (fn) { return (connection.off || connection.removeEventListener).call(connection, event, fn); }
