@@ -167,10 +167,7 @@ export default function(url, protocols, WebSocket, options) {
 
     const event = typeof window !== 'undefined' && window.CloseEvent
       ? new window.CloseEvent('HeartbeatTimeout', { wasClean: true, code: code, reason: reason })
-      : new Error('HeartbeatTimeout')
-
-    event.code = code
-    event.reason = reason
+      : Object.assign(new Error('HeartbeatTimeout'), { code: code, reason: reason })
 
     onclose(event)
     connection.close(event.code, event.reason)
