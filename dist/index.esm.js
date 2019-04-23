@@ -36,12 +36,10 @@ function index(url, protocols, WebSocket, options) {
     , binaryType = null
     , closed = false;
 
-  var events = {
-    open : [],
-    close: [],
-    error: [],
-    message: []
-  };
+  var listeners = {};
+  var listenerHandlers = {};
+  var ons = {};
+  var onHandlers = {};
 
   var pws = {
     CONNECTING: 'CONNECTING' in WebSocket ? WebSocket.CONNECTING : 0,
@@ -80,20 +78,30 @@ function index(url, protocols, WebSocket, options) {
     onerror: options.onerror
   };
 
-  pws.addEventListener = pws.on = function (event, fn) {
-    events[event].push(fn);
-    connection && (connection.on || connection.addEventListener).call(connection, event, fn);
-  };
-  pws.removeEventListener = pws.off = function (event, fn) {
-    events[event].splice(events[event].indexOf(fn), 1);
-    connection && (connection.off || connection.removeEventListener).call(connection, event, fn);
-  };
-  pws.once = function (event, fn) {
-    pws.addEventListener(event, function self(e) {
-      pws.removeEventListener(event, self);
-      fn(e);
-    });
-  };
+  var on = function (method, events, handlers) { return function (event, fn, options) {
+    function handler(e) {
+      options && options.once && connection[method === 'on' ? 'off' : 'removeEventListener'](event, fn);
+      fn.call(pws, e);
+    }
+
+    event in events ? events[event].push(fn) : (events[event] = [fn]);
+    event in handlers ? handlers[event].push(handler) : (handlers[event] = [handler]);
+    connection && connection[method](event, handler);
+  }; };
+
+  var off = function (method, events, handlers) { return function (event, fn) {
+    var index = events[event].indexOf(fn);
+    connection && connection[method](event, handlers[event][index]);
+
+    events[event].splice(index, 1);
+    handlers[event].splice(index, 1)[0];
+  }; };
+
+  pws.addEventListener = on('addEventListener', listeners, listenerHandlers);
+  pws.removeEventListener = off('removeEventListener', listeners, listenerHandlers);
+  pws.on = on('on', ons, onHandlers);
+  pws.off = off('off', ons, onHandlers);
+  pws.once = function (event, fn) { return pws.on(event, fn, { once: true }); };
 
   if (url)
     { connect(); }
@@ -113,9 +121,11 @@ function index(url, protocols, WebSocket, options) {
     reconnecting = false;
 
     connection = new WebSocket(typeof pws.url === 'function' ? pws.url(pws) : pws.url, protocols, options);
-    Object.keys(events).forEach(function (event) {
-      events[event].forEach(function (fn) { return (connection.on || connection.addEventListener).call(connection, event, fn); }
-      );
+    Object.keys(listenerHandlers).forEach(function (event) {
+      listenerHandlers[event].forEach(function (handler) { return connection.addEventListener(event, handler); });
+    });
+    Object.keys(onHandlers).forEach(function (event) {
+      onHandlers[event].forEach(function (handler) { return connection.on(event, handler); });
     });
     if (binaryType)
       { connection.binaryType = binaryType; }
@@ -202,9 +212,11 @@ function index(url, protocols, WebSocket, options) {
     connection.onopen = null;
     connection.onerror = function () { /* Discard errors when cleaning up */ };
     connection.onmessage = null;
-    Object.keys(events).forEach(function (event) {
-      events[event].forEach(function (fn) { return (connection.off || connection.removeEventListener).call(connection, event, fn); }
-      );
+    Object.keys(listeners).forEach(function (event) {
+      listeners[event].forEach(function (handler) { return connection.removeEventListener(event, handler); });
+    });
+    Object.keys(ons).forEach(function (event) {
+      ons[event].forEach(function (handler) { return connection.off(event, handler); });
     });
     connection.close();
   }
