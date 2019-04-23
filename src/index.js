@@ -80,7 +80,7 @@ export default function(url, protocols, WebSocket, options) {
 
   const on = (method, events, handlers) => (event, fn, options) => {
     function handler(e) {
-      options && options.once && connection[method === 'on' ? 'off' : 'removeEventListener'](event, fn)
+      options && options.once && connection[method === 'on' ? 'off' : 'removeEventListener'](event, handler)
       fn.call(pws, e)
     }
 
@@ -94,7 +94,7 @@ export default function(url, protocols, WebSocket, options) {
     connection && connection[method](event, handlers[event][index])
 
     events[event].splice(index, 1)
-    handlers[event].splice(index, 1)[0]
+    handlers[event].splice(index, 1)
   }
 
   pws.addEventListener = on('addEventListener', listeners, listenerHandlers)
@@ -137,8 +137,15 @@ export default function(url, protocols, WebSocket, options) {
   }
 
   function onclose(event) {
-    pws.onclose && pws.onerror.apply(pws, arguments)
+    pws.onclose && pws.onclose.apply(pws, arguments)
     connection.onclose = null
+    Object.keys(listenerHandlers).forEach(event => {
+      listenerHandlers[event].forEach(handler => connection.removeEventListener(event, handler))
+    })
+    Object.keys(onHandlers).forEach(event => {
+      onHandlers[event].forEach(handler => connection.off(event, handler))
+    })
+
     if (!closed)
       event.reconnectDelay = Math.ceil(reconnect())
   }
@@ -184,7 +191,6 @@ export default function(url, protocols, WebSocket, options) {
       event.reason = reason
     }
 
-    onclose(event)
     connection.close(code, reason)
   }
 
@@ -212,12 +218,6 @@ export default function(url, protocols, WebSocket, options) {
     connection.onopen = null
     connection.onerror = () => { /* Discard errors when cleaning up */ }
     connection.onmessage = null
-    Object.keys(listeners).forEach(event => {
-      listeners[event].forEach(handler => connection.removeEventListener(event, handler))
-    })
-    Object.keys(ons).forEach(event => {
-      ons[event].forEach(handler => connection.off(event, handler))
-    })
     connection.close()
   }
 }
