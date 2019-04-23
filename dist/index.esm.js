@@ -164,15 +164,18 @@ function index(url, protocols, WebSocket, options) {
     var code = 4663
         , reason = 'No heartbeat received in due time';
 
-    var event = typeof window !== 'undefined' && window.CloseEvent
-      ? new window.CloseEvent('HeartbeatTimeout', { wasClean: true, code: code, reason: reason })
-      : new Error('HeartbeatTimeout');
+    var event;
 
-    event.code = code;
-    event.reason = reason;
+    if (typeof window !== 'undefined' && window.CloseEvent) {
+      event = new window.CloseEvent('HeartbeatTimeout', { wasClean: true, code: code, reason: reason });
+    } else {
+      event = new Error('HeartbeatTimeout');
+      event.code = code;
+      event.reason = reason;
+    }
 
     onclose(event);
-    connection.close(event.code, event.reason);
+    connection.close(code, reason);
   }
 
   function reconnect() {
