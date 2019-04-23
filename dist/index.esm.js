@@ -80,7 +80,7 @@ function index(url, protocols, WebSocket, options) {
 
   var on = function (method, events, handlers) { return function (event, fn, options) {
     function handler(e) {
-      options && options.once && connection[method === 'on' ? 'off' : 'removeEventListener'](event, fn);
+      options && options.once && connection[method === 'on' ? 'off' : 'removeEventListener'](event, handler);
       fn.call(pws, e);
     }
 
@@ -94,7 +94,7 @@ function index(url, protocols, WebSocket, options) {
     connection && connection[method](event, handlers[event][index]);
 
     events[event].splice(index, 1);
-    handlers[event].splice(index, 1)[0];
+    handlers[event].splice(index, 1);
   }; };
 
   pws.addEventListener = on('addEventListener', listeners, listenerHandlers);
@@ -137,8 +137,15 @@ function index(url, protocols, WebSocket, options) {
   }
 
   function onclose(event) {
-    pws.onclose && pws.onerror.apply(pws, arguments);
+    pws.onclose && pws.onclose.apply(pws, arguments);
     connection.onclose = null;
+    Object.keys(listenerHandlers).forEach(function (event) {
+      listenerHandlers[event].forEach(function (handler) { return connection.removeEventListener(event, handler); });
+    });
+    Object.keys(onHandlers).forEach(function (event) {
+      onHandlers[event].forEach(function (handler) { return connection.off(event, handler); });
+    });
+
     if (!closed)
       { event.reconnectDelay = Math.ceil(reconnect()); }
   }
@@ -184,7 +191,6 @@ function index(url, protocols, WebSocket, options) {
       event.reason = reason;
     }
 
-    onclose(event);
     connection.close(code, reason);
   }
 
@@ -212,12 +218,6 @@ function index(url, protocols, WebSocket, options) {
     connection.onopen = null;
     connection.onerror = function () { /* Discard errors when cleaning up */ };
     connection.onmessage = null;
-    Object.keys(listeners).forEach(function (event) {
-      listeners[event].forEach(function (handler) { return connection.removeEventListener(event, handler); });
-    });
-    Object.keys(ons).forEach(function (event) {
-      ons[event].forEach(function (handler) { return connection.off(event, handler); });
-    });
     connection.close();
   }
 }
