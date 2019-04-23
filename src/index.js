@@ -35,6 +35,7 @@ export default function(url, protocols, WebSocket, options) {
     , heartbeatTimer = null
     , binaryType = null
     , closed = false
+    , lastOpen = Date.now()
 
   const listeners = {}
   const listenerHandlers = {}
@@ -161,7 +162,9 @@ export default function(url, protocols, WebSocket, options) {
   function onopen(event) {
     pws.onopen && pws.onopen.apply(pws, arguments)
     heartbeat()
-    pws.retries = 0
+    if (Date.now() - lastOpen > pws.maxTimeout)
+      pws.retries = 0
+    lastOpen = Date.now()
   }
 
   function onmessage(event) {
