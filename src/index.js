@@ -36,12 +36,10 @@ export default function(url, protocols, WebSocket, options) {
     , binaryType = null
     , closed = false
 
-  const events = {
-    open : [],
-    close: [],
-    error: [],
-    message: []
-  }
+  const listeners = {}
+  const listenerHandlers = {}
+  const ons = {}
+  const onHandlers = {}
 
   const pws = {
     CONNECTING: 'CONNECTING' in WebSocket ? WebSocket.CONNECTING : 0,
@@ -80,20 +78,30 @@ export default function(url, protocols, WebSocket, options) {
     onerror: options.onerror
   }
 
-  pws.addEventListener = pws.on = (event, fn) => {
-    events[event].push(fn)
-    connection && (connection.on || connection.addEventListener).call(connection, event, fn)
+  const on = (method, events, handlers) => (event, fn, options) => {
+    function handler(e) {
+      options && options.once && connection[method === 'on' ? 'off' : 'removeEventListener'](event, fn)
+      fn.call(pws, e)
+    }
+
+    event in events ? events[event].push(fn) : (events[event] = [fn])
+    event in handlers ? handlers[event].push(handler) : (handlers[event] = [handler])
+    connection && connection[method](event, handler)
   }
-  pws.removeEventListener = pws.off = (event, fn) => {
-    events[event].splice(events[event].indexOf(fn), 1)
-    connection && (connection.off || connection.removeEventListener).call(connection, event, fn)
+
+  const off = (method, events, handlers) => (event, fn) => {
+    const index = events[event].indexOf(fn)
+    connection && connection[method](event, handlers[event][index])
+
+    events[event].splice(index, 1)
+    handlers[event].splice(index, 1)[0]
   }
-  pws.once = (event, fn) => {
-    pws.addEventListener(event, function self(e) {
-      pws.removeEventListener(event, self)
-      fn(e)
-    })
-  }
+
+  pws.addEventListener = on('addEventListener', listeners, listenerHandlers)
+  pws.removeEventListener = off('removeEventListener', listeners, listenerHandlers)
+  pws.on = on('on', ons, onHandlers)
+  pws.off = off('off', ons, onHandlers)
+  pws.once = (event, fn) => pws.on(event, fn, { once: true })
 
   if (url)
     connect()
@@ -113,10 +121,11 @@ export default function(url, protocols, WebSocket, options) {
     reconnecting = false
 
     connection = new WebSocket(typeof pws.url === 'function' ? pws.url(pws) : pws.url, protocols, options)
-    Object.keys(events).forEach(event => {
-      events[event].forEach(fn =>
-        (connection.on || connection.addEventListener).call(connection, event, fn)
-      )
+    Object.keys(listenerHandlers).forEach(event => {
+      listenerHandlers[event].forEach(handler => connection.addEventListener(event, handler))
+    })
+    Object.keys(onHandlers).forEach(event => {
+      onHandlers[event].forEach(handler => connection.on(event, handler))
     })
     if (binaryType)
       connection.binaryType = binaryType
@@ -203,10 +212,11 @@ export default function(url, protocols, WebSocket, options) {
     connection.onopen = null
     connection.onerror = () => { /* Discard errors when cleaning up */ }
     connection.onmessage = null
-    Object.keys(events).forEach(event => {
-      events[event].forEach(fn =>
-        (connection.off || connection.removeEventListener).call(connection, event, fn)
-      )
+    Object.keys(listeners).forEach(event => {
+      listeners[event].forEach(handler => connection.removeEventListener(event, handler))
+    })
+    Object.keys(ons).forEach(event => {
+      ons[event].forEach(handler => connection.off(event, handler))
     })
     connection.close()
   }
