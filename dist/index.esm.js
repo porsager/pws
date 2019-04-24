@@ -34,7 +34,9 @@ function index(url, protocols, WebSocket, options) {
     , reconnectTimer = null
     , heartbeatTimer = null
     , binaryType = null
-    , closed = false;
+    , closed = false
+    , lastOpen = Date.now()
+    , reconnectDelay;
 
   var listeners = {};
   var listenerHandlers = {};
@@ -81,7 +83,8 @@ function index(url, protocols, WebSocket, options) {
   var on = function (method, events, handlers) { return function (event, fn, options) {
     function handler(e) {
       options && options.once && connection[method === 'on' ? 'off' : 'removeEventListener'](event, handler);
-      fn.call(pws, e);
+      e && typeof e === 'object' && reconnectDelay && (e.reconnectDelay = reconnectDelay);
+      fn.apply(pws, arguments);
     }
 
     event in events ? events[event].push(fn) : (events[event] = [fn]);
@@ -91,6 +94,9 @@ function index(url, protocols, WebSocket, options) {
 
   var off = function (method, events, handlers) { return function (event, fn) {
     var index = events[event].indexOf(fn);
+    if (index === -1)
+      { return }
+
     connection && connection[method](event, handlers[event][index]);
 
     events[event].splice(index, 1);
@@ -116,38 +122,33 @@ function index(url, protocols, WebSocket, options) {
       { pws.url = url; }
 
     if (connection)
-      { clean(connection); }
+      { return close(4665, 'Manual connect initiated') }
 
     reconnecting = false;
 
     connection = new WebSocket(typeof pws.url === 'function' ? pws.url(pws) : pws.url, protocols, options);
+    connection.onclose = onclose;
+    connection.onerror = onerror;
+    connection.onopen = onopen;
+    connection.onmessage = onmessage;
     Object.keys(listenerHandlers).forEach(function (event) {
       listenerHandlers[event].forEach(function (handler) { return connection.addEventListener(event, handler); });
     });
     Object.keys(onHandlers).forEach(function (event) {
       onHandlers[event].forEach(function (handler) { return connection.on(event, handler); });
     });
+
     if (binaryType)
       { connection.binaryType = binaryType; }
-
-    connection.onclose = onclose;
-    connection.onerror = onerror;
-    connection.onopen = onopen;
-    connection.onmessage = onmessage;
   }
 
-  function onclose(event) {
+  function onclose(event, emit) {
     pws.onclose && pws.onclose.apply(pws, arguments);
-    connection.onclose = null;
-    Object.keys(listenerHandlers).forEach(function (event) {
-      listenerHandlers[event].forEach(function (handler) { return connection.removeEventListener(event, handler); });
-    });
-    Object.keys(onHandlers).forEach(function (event) {
-      onHandlers[event].forEach(function (handler) { return connection.off(event, handler); });
-    });
-
+    clearTimeout(heartbeatTimer);
     if (!closed)
-      { event.reconnectDelay = Math.ceil(reconnect()); }
+      { reconnectDelay = event.reconnectDelay = Math.ceil(reconnect()); }
+
+    connection = null;
   }
 
   function onerror(event) {
@@ -155,13 +156,15 @@ function index(url, protocols, WebSocket, options) {
     if (!event)
       { event = new Error('UnknownError'); }
 
-    event.reconnectDelay = Math.ceil(reconnect());
+    reconnectDelay = event.reconnectDelay = Math.ceil(reconnect());
   }
 
   function onopen(event) {
     pws.onopen && pws.onopen.apply(pws, arguments);
     heartbeat();
-    pws.retries = 0;
+    if (Date.now() - lastOpen > pws.maxTimeout)
+      { pws.retries = 0; }
+    lastOpen = Date.now();
   }
 
   function onmessage(event) {
@@ -178,28 +181,12 @@ function index(url, protocols, WebSocket, options) {
   }
 
   function timedOut() {
-    var code = 4663
-        , reason = 'No heartbeat received in due time';
-
-    var event;
-
-    if (typeof window !== 'undefined' && window.CloseEvent) {
-      event = new window.CloseEvent('HeartbeatTimeout', { wasClean: true, code: code, reason: reason });
-    } else {
-      event = new Error('HeartbeatTimeout');
-      event.code = code;
-      event.reason = reason;
-    }
-
-    connection.close(code, reason);
+    close(4663, 'No heartbeat received within ' + pws.pingTimeout + 'ms');
   }
 
   function reconnect() {
     if (reconnecting)
       { return Date.now() - reconnecting }
-
-    if (connection)
-      { clean(connection); }
 
     reconnecting = Date.now();
     pws.retries++;
@@ -213,12 +200,38 @@ function index(url, protocols, WebSocket, options) {
     return delay
   }
 
+  function close(code, reason) {
+    setTimeout(clean, 0, connection);
+
+    var event = closeEvent(code, reason);
+    onclose(event);
+    listenerHandlers.close && listenerHandlers.close.forEach(function (handler) { return handler(event); });
+    onHandlers.close && onHandlers.close.forEach(function (handler) { return handler(code, reason, reconnectDelay); });
+  }
+
   function clean(connection) {
-    connection.onclose = null;
-    connection.onopen = null;
-    connection.onerror = function () { /* Discard errors when cleaning up */ };
-    connection.onmessage = null;
+    connection.onclose = connection.onopen = connection.onerror = connection.onmessage = null;
+    Object.keys(listenerHandlers).forEach(function (event) {
+      listenerHandlers[event].forEach(function (handler) { return connection.removeEventListener(event, handler); });
+    });
+    Object.keys(onHandlers).forEach(function (event) {
+      onHandlers[event].forEach(function (handler) { return connection.off(event, handler); });
+    });
     connection.close();
+  }
+
+  function closeEvent(code, reason) {
+    var event;
+
+    if (typeof window !== 'undefined' && window.CloseEvent) {
+      event = new window.CloseEvent('HeartbeatTimeout', { wasClean: true, code: code, reason: reason });
+    } else {
+      event = new Error('HeartbeatTimeout');
+      event.code = code;
+      event.reason = reason;
+    }
+
+    return event
   }
 }
 
