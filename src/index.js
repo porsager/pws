@@ -83,8 +83,8 @@ export default function(url, protocols, WebSocket, options) {
   const on = (method, events, handlers) => (event, fn, options) => {
     function handler(e) {
       options && options.once && connection[method === 'on' ? 'off' : 'removeEventListener'](event, handler)
-      event === 'close' && reconnectDelay && (e.reconnectDelay = reconnectDelay)
-      fn.call(pws, e)
+      e && typeof e === 'object' && reconnectDelay && (e.reconnectDelay = reconnectDelay)
+      fn.apply(pws, arguments)
     }
 
     event in events ? events[event].push(fn) : (events[event] = [fn])
@@ -115,15 +115,15 @@ export default function(url, protocols, WebSocket, options) {
   return pws
 
   function connect(url) {
-    closed = true
+    closed = false
     clearTimeout(reconnectTimer)
 
     if (typeof url === 'string')
       pws.url = url
 
-    clean(4665, 'Manual connect initiated')
+    if (connection)
+      return close(4665, 'Manual connect initiated')
 
-    closed = false
     reconnecting = false
 
     connection = new WebSocket(typeof pws.url === 'function' ? pws.url(pws) : pws.url, protocols, options)
@@ -144,22 +144,10 @@ export default function(url, protocols, WebSocket, options) {
 
   function onclose(event, emit) {
     pws.onclose && pws.onclose.apply(pws, arguments)
-    connection.onclose = null
+    clearTimeout(heartbeatTimer)
     if (!closed)
       reconnectDelay = event.reconnectDelay = Math.ceil(reconnect())
 
-    const previous = connection
-    setTimeout(() => {
-      Object.keys(listenerHandlers).forEach(event => {
-        listenerHandlers[event].forEach(handler => previous.removeEventListener(event, handler))
-      })
-      Object.keys(onHandlers).forEach(event => {
-        onHandlers[event].forEach(handler => previous.off(event, handler))
-      })
-    })
-
-    emit && listenerHandlers.close && listenerHandlers.close.forEach(handler => handler(event))
-    emit && onHandlers.close && onHandlers.close.forEach(handler => handler(event.code, event.reason))
     connection = null
   }
 
@@ -193,7 +181,43 @@ export default function(url, protocols, WebSocket, options) {
   }
 
   function timedOut() {
-    clean(4663, 'No heartbeat received within ' + pws.pingTimeout + 'ms')
+    close(4663, 'No heartbeat received within ' + pws.pingTimeout + 'ms')
+  }
+
+  function reconnect() {
+    if (reconnecting)
+      return Date.now() - reconnecting
+
+    reconnecting = Date.now()
+    pws.retries++
+
+    if (pws.maxRetries && pws.retries >= pws.maxRetries)
+      return
+
+    const delay = pws.nextReconnectDelay(pws.retries)
+    reconnectTimer = setTimeout(connect, delay)
+
+    return delay
+  }
+
+  function close(code, reason) {
+    setTimeout(clean, 0, connection)
+
+    const event = closeEvent(code, reason)
+    onclose(event)
+    listenerHandlers.close && listenerHandlers.close.forEach(handler => handler(event))
+    onHandlers.close && onHandlers.close.forEach(handler => handler(code, reason, reconnectDelay))
+  }
+
+  function clean(connection) {
+    connection.onclose = connection.onopen = connection.onerror = connection.onmessage = null
+    Object.keys(listenerHandlers).forEach(event => {
+      listenerHandlers[event].forEach(handler => connection.removeEventListener(event, handler))
+    })
+    Object.keys(onHandlers).forEach(event => {
+      onHandlers[event].forEach(handler => connection.off(event, handler))
+    })
+    connection.close()
   }
 
   function closeEvent(code, reason) {
@@ -208,34 +232,6 @@ export default function(url, protocols, WebSocket, options) {
     }
 
     return event
-  }
-
-  function reconnect() {
-    if (reconnecting)
-      return Date.now() - reconnecting
-
-    clean(4664, 'Reconnecting')
-
-    reconnecting = Date.now()
-    pws.retries++
-
-    if (pws.maxRetries && pws.retries >= pws.maxRetries)
-      return
-
-    const delay = pws.nextReconnectDelay(pws.retries)
-    reconnectTimer = setTimeout(connect, delay)
-
-    return delay
-  }
-
-  function clean(code, reason) {
-    if (!connection || !connection.onclose)
-      return
-
-    connection.onopen = null
-    connection.onerror = () => { /* Discard errors when cleaning up */ }
-    connection.onmessage = null
-    onclose(closeEvent(code, reason), true)
   }
 }
 
