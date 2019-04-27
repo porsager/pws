@@ -1,5 +1,7 @@
 export default function(url, protocols, WebSocket, options) {
   if (typeof protocols === 'function') {
+    if (typeof WebSocket === 'object')
+      options = WebSocket
     WebSocket = protocols
     protocols = undefined
   }
