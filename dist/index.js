@@ -1,8 +1,8 @@
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
   typeof define === 'function' && define.amd ? define(factory) :
-  (global.PersistentWebSocket = factory());
-}(this, (function () { 'use strict';
+  (global = global || self, global.PersistentWebSocket = factory());
+}(this, function () { 'use strict';
 
   function index(url, protocols, WebSocket, options) {
     if (typeof protocols === 'function') {
@@ -245,4 +245,4 @@
 
   return index;
 
-})));
+}));
