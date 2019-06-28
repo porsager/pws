@@ -123,7 +123,7 @@ export default function(url, protocols, WebSocket, options) {
     if (typeof url === 'string')
       pws.url = url
 
-    if (connection)
+    if (connection.readyState !== 3)
       return close(4665, 'Manual connect initiated')
 
     reconnecting = false
@@ -149,8 +149,6 @@ export default function(url, protocols, WebSocket, options) {
     clearTimeout(heartbeatTimer)
     if (!closed)
       reconnectDelay = event.reconnectDelay = Math.ceil(reconnect())
-
-    connection = null
   }
 
   function onerror(event) {
