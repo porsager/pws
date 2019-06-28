@@ -123,7 +123,7 @@ export default function(url, protocols, WebSocket, options) {
     if (typeof url === 'string')
       pws.url = url
 
-    if (connection.readyState !== 3)
+    if (connection && connection.readyState !== 3)
       return close(4665, 'Manual connect initiated')
 
     reconnecting = false
