@@ -39,7 +39,7 @@ More details at https://github.com/websockets/ws/blob/master/doc/ws.md#new-webso
 
 ### Heartbeat
 
-To ensure a persistent connection it's necesarry to send messages at regular intervals from the server to keep the connection alive. The WebSocket protocol only implements a ping to be sent from the server, but not in the other direction. This can leave the client in a half open state where it thinks it's connected, but doesn't receive messages from the server.
+To ensure a persistent connection it's necessary to send messages at regular intervals from the server to keep the connection alive. The WebSocket protocol only implements a ping to be sent from the server, but not in the other direction. This can leave the client in a half open state where it thinks it's connected, but doesn't receive messages from the server.
 To prevent this state PWS let's you set a specific timeout after which to force a reconnection if you did not receive any messages from the server.
 
 ```js
