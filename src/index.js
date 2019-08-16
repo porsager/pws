@@ -146,8 +146,7 @@ export default function(url, protocols, WebSocket, options) {
 
   function onclose(event, emit) {
     clearTimeout(heartbeatTimer)
-    if (!closed)
-      reconnectDelay = event.reconnectDelay = Math.ceil(reconnect())
+    event.reconnectDelay = Math.ceil(reconnect())
     pws.onclose && pws.onclose.apply(pws, arguments)
   }
 
@@ -155,7 +154,7 @@ export default function(url, protocols, WebSocket, options) {
     if (!event)
       event = new Error('UnknownError')
 
-    reconnectDelay = event.reconnectDelay = Math.ceil(reconnect())
+    event.reconnectDelay = Math.ceil(reconnect())
     pws.onerror && pws.onerror.apply(pws, arguments)
   }
 
@@ -184,7 +183,7 @@ export default function(url, protocols, WebSocket, options) {
 
   function reconnect() {
     if (reconnecting)
-      return Date.now() - reconnecting + reconnectDelay
+      return reconnectDelay - (Date.now() - reconnecting)
 
     reconnecting = Date.now()
     pws.retries = lastOpen && Date.now() - lastOpen > reconnectDelay
@@ -194,10 +193,10 @@ export default function(url, protocols, WebSocket, options) {
     if (pws.maxRetries && pws.retries >= pws.maxRetries)
       return
 
-    const delay = pws.nextReconnectDelay(pws.retries)
-    reconnectTimer = setTimeout(connect, delay)
+    reconnectDelay = pws.nextReconnectDelay(pws.retries)
+    reconnectTimer = setTimeout(connect, reconnectDelay)
 
-    return delay
+    return reconnectDelay
   }
 
   function close(code, reason) {
