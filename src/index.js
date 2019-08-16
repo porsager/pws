@@ -37,7 +37,7 @@ export default function(url, protocols, WebSocket, options) {
     , heartbeatTimer = null
     , binaryType = null
     , closed = false
-    , lastOpen = Date.now()
+    , lastOpen = null
     , reconnectDelay
 
   const listeners = {}
@@ -145,18 +145,18 @@ export default function(url, protocols, WebSocket, options) {
   }
 
   function onclose(event, emit) {
-    pws.onclose && pws.onclose.apply(pws, arguments)
     clearTimeout(heartbeatTimer)
     if (!closed)
       reconnectDelay = event.reconnectDelay = Math.ceil(reconnect())
+    pws.onclose && pws.onclose.apply(pws, arguments)
   }
 
   function onerror(event) {
-    pws.onerror && pws.onerror.apply(pws, arguments)
     if (!event)
       event = new Error('UnknownError')
 
     reconnectDelay = event.reconnectDelay = Math.ceil(reconnect())
+    pws.onerror && pws.onerror.apply(pws, arguments)
   }
 
   function onopen(event) {
@@ -186,7 +186,7 @@ export default function(url, protocols, WebSocket, options) {
 
   function reconnect() {
     if (reconnecting)
-      return Date.now() - reconnecting
+      return Date.now() - reconnecting + reconnectDelay
 
     reconnecting = Date.now()
     pws.retries++
