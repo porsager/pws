@@ -162,8 +162,6 @@ export default function(url, protocols, WebSocket, options) {
   function onopen(event) {
     pws.onopen && pws.onopen.apply(pws, arguments)
     heartbeat()
-    if (Date.now() - lastOpen > pws.maxTimeout)
-      pws.retries = 0
     lastOpen = Date.now()
   }
 
@@ -189,7 +187,9 @@ export default function(url, protocols, WebSocket, options) {
       return Date.now() - reconnecting + reconnectDelay
 
     reconnecting = Date.now()
-    pws.retries++
+    pws.retries = lastOpen && Date.now() - lastOpen > reconnectDelay
+      ? 1
+      : pws.retries + 1
 
     if (pws.maxRetries && pws.retries >= pws.maxRetries)
       return
