@@ -36,8 +36,7 @@ function index(url, protocols, WebSocket, options) {
     , reconnectTimer = null
     , heartbeatTimer = null
     , binaryType = null
-    , closed = false
-    , lastOpen = Date.now()
+    , lastOpen = null
     , reconnectDelay;
 
   var listeners = {};
@@ -73,7 +72,6 @@ function index(url, protocols, WebSocket, options) {
     },
     close: function() {
       clearTimeout(reconnectTimer);
-      closed = true;
       connection.close.apply(connection, arguments);
     },
     onopen: options.onopen,
@@ -117,7 +115,6 @@ function index(url, protocols, WebSocket, options) {
   return pws
 
   function connect(url) {
-    closed = false;
     clearTimeout(reconnectTimer);
 
     if (typeof url === 'string')
@@ -145,25 +142,22 @@ function index(url, protocols, WebSocket, options) {
   }
 
   function onclose(event, emit) {
-    pws.onclose && pws.onclose.apply(pws, arguments);
     clearTimeout(heartbeatTimer);
-    if (!closed)
-      { reconnectDelay = event.reconnectDelay = Math.ceil(reconnect()); }
+    event.reconnectDelay = Math.ceil(reconnect());
+    pws.onclose && pws.onclose.apply(pws, arguments);
   }
 
   function onerror(event) {
-    pws.onerror && pws.onerror.apply(pws, arguments);
     if (!event)
       { event = new Error('UnknownError'); }
 
-    reconnectDelay = event.reconnectDelay = Math.ceil(reconnect());
+    event.reconnectDelay = Math.ceil(reconnect());
+    pws.onerror && pws.onerror.apply(pws, arguments);
   }
 
   function onopen(event) {
     pws.onopen && pws.onopen.apply(pws, arguments);
     heartbeat();
-    if (Date.now() - lastOpen > pws.maxTimeout)
-      { pws.retries = 0; }
     lastOpen = Date.now();
   }
 
@@ -186,18 +180,20 @@ function index(url, protocols, WebSocket, options) {
 
   function reconnect() {
     if (reconnecting)
-      { return Date.now() - reconnecting }
+      { return reconnectDelay - (Date.now() - reconnecting) }
 
     reconnecting = Date.now();
-    pws.retries++;
+    pws.retries = lastOpen && Date.now() - lastOpen > reconnectDelay
+      ? 1
+      : pws.retries + 1;
 
     if (pws.maxRetries && pws.retries >= pws.maxRetries)
       { return }
 
-    var delay = pws.nextReconnectDelay(pws.retries);
-    reconnectTimer = setTimeout(connect, delay);
+    reconnectDelay = pws.nextReconnectDelay(pws.retries);
+    reconnectTimer = setTimeout(connect, reconnectDelay);
 
-    return delay
+    return reconnectDelay
   }
 
   function close(code, reason) {
