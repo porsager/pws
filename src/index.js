@@ -16,13 +16,12 @@ export default function(url, protocols, WebSocket, options) {
     WebSocket = undefined
   }
 
-  if (!WebSocket) {
-    if (typeof window !== 'undefined') {
-      WebSocket = window.WebSocket
-      typeof window !== 'undefined'
-        && typeof window.addEventListener === 'function'
-        && window.addEventListener('online', connect)
-    }
+  const browser = typeof window !== 'undefined' && window.WebSocket
+  if (browser) {
+    WebSocket = WebSocket || window.WebSocket
+    typeof window !== 'undefined'
+      && typeof window.addEventListener === 'function'
+      && window.addEventListener('online', connect)
   }
 
   if (!WebSocket)
@@ -128,7 +127,12 @@ export default function(url, protocols, WebSocket, options) {
 
     reconnecting = false
 
-    connection = new WebSocket(typeof pws.url === 'function' ? pws.url(pws) : pws.url, protocols, options)
+    connection = browser
+      ? protocols
+        ? new WebSocket(url)
+        : new WebSocket(url, protocols)
+      : new WebSocket(url, protocols, options)
+
     connection.onclose = onclose
     connection.onerror = onerror
     connection.onopen = onopen
