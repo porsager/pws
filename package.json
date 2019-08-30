@@ -1,6 +1,6 @@
 {
   "name": "pws",
-  "version": "4.0.6",
+  "version": "4.1.0",
   "description": "A Persistent WebSocket wrapper",
   "main": "dist/index.js",
   "module": "dist/index.esm.js",
