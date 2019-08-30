@@ -22,13 +22,12 @@
       WebSocket = undefined;
     }
 
-    if (!WebSocket) {
-      if (typeof window !== 'undefined') {
-        WebSocket = window.WebSocket;
-        typeof window !== 'undefined'
-          && typeof window.addEventListener === 'function'
-          && window.addEventListener('online', connect);
-      }
+    var browser = typeof window !== 'undefined' && window.WebSocket;
+    if (browser) {
+      WebSocket = WebSocket || window.WebSocket;
+      typeof window !== 'undefined'
+        && typeof window.addEventListener === 'function'
+        && window.addEventListener('online', connect);
     }
 
     if (!WebSocket)
@@ -42,6 +41,7 @@
       , reconnectTimer = null
       , heartbeatTimer = null
       , binaryType = null
+      , closed = false
       , lastOpen = null
       , reconnectDelay;
 
@@ -78,6 +78,7 @@
       },
       close: function() {
         clearTimeout(reconnectTimer);
+        closed = true;
         connection.close.apply(connection, arguments);
       },
       onopen: options.onopen,
@@ -121,6 +122,7 @@
     return pws
 
     function connect(url) {
+      closed = false;
       clearTimeout(reconnectTimer);
 
       if (typeof url === 'string')
@@ -131,7 +133,12 @@
 
       reconnecting = false;
 
-      connection = new WebSocket(typeof pws.url === 'function' ? pws.url(pws) : pws.url, protocols, options);
+      connection = browser
+        ? protocols
+          ? new WebSocket(url)
+          : new WebSocket(url, protocols)
+        : new WebSocket(url, protocols, options);
+
       connection.onclose = onclose;
       connection.onerror = onerror;
       connection.onopen = onopen;
@@ -185,6 +192,9 @@
     }
 
     function reconnect() {
+      if (closed)
+        { return }
+
       if (reconnecting)
         { return reconnectDelay - (Date.now() - reconnecting) }
 
@@ -203,6 +213,7 @@
     }
 
     function close(code, reason) {
+      closed = true;
       setTimeout(clean, 0, connection);
 
       var event = closeEvent(code, reason);

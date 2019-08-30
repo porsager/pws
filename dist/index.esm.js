@@ -16,13 +16,12 @@ function index(url, protocols, WebSocket, options) {
     WebSocket = undefined;
   }
 
-  if (!WebSocket) {
-    if (typeof window !== 'undefined') {
-      WebSocket = window.WebSocket;
-      typeof window !== 'undefined'
-        && typeof window.addEventListener === 'function'
-        && window.addEventListener('online', connect);
-    }
+  var browser = typeof window !== 'undefined' && window.WebSocket;
+  if (browser) {
+    WebSocket = WebSocket || window.WebSocket;
+    typeof window !== 'undefined'
+      && typeof window.addEventListener === 'function'
+      && window.addEventListener('online', connect);
   }
 
   if (!WebSocket)
@@ -36,6 +35,7 @@ function index(url, protocols, WebSocket, options) {
     , reconnectTimer = null
     , heartbeatTimer = null
     , binaryType = null
+    , closed = false
     , lastOpen = null
     , reconnectDelay;
 
@@ -72,6 +72,7 @@ function index(url, protocols, WebSocket, options) {
     },
     close: function() {
       clearTimeout(reconnectTimer);
+      closed = true;
       connection.close.apply(connection, arguments);
     },
     onopen: options.onopen,
@@ -115,6 +116,7 @@ function index(url, protocols, WebSocket, options) {
   return pws
 
   function connect(url) {
+    closed = false;
     clearTimeout(reconnectTimer);
 
     if (typeof url === 'string')
@@ -125,7 +127,12 @@ function index(url, protocols, WebSocket, options) {
 
     reconnecting = false;
 
-    connection = new WebSocket(typeof pws.url === 'function' ? pws.url(pws) : pws.url, protocols, options);
+    connection = browser
+      ? protocols
+        ? new WebSocket(url)
+        : new WebSocket(url, protocols)
+      : new WebSocket(url, protocols, options);
+
     connection.onclose = onclose;
     connection.onerror = onerror;
     connection.onopen = onopen;
@@ -179,6 +186,9 @@ function index(url, protocols, WebSocket, options) {
   }
 
   function reconnect() {
+    if (closed)
+      { return }
+
     if (reconnecting)
       { return reconnectDelay - (Date.now() - reconnecting) }
 
@@ -197,6 +207,7 @@ function index(url, protocols, WebSocket, options) {
   }
 
   function close(code, reason) {
+    closed = true;
     setTimeout(clean, 0, connection);
 
     var event = closeEvent(code, reason);
