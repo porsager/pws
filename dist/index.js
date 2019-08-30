@@ -133,6 +133,7 @@
 
       reconnecting = false;
 
+      url = typeof pws.url === 'function' ? pws.url(pws) : pws.url;
       connection = browser
         ? protocols
           ? new WebSocket(url)
