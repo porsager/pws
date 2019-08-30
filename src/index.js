@@ -186,6 +186,9 @@ export default function(url, protocols, WebSocket, options) {
   }
 
   function reconnect() {
+    if (closed)
+      return
+
     if (reconnecting)
       return reconnectDelay - (Date.now() - reconnecting)
 
@@ -204,6 +207,7 @@ export default function(url, protocols, WebSocket, options) {
   }
 
   function close(code, reason) {
+    closed = true
     setTimeout(clean, 0, connection)
 
     const event = closeEvent(code, reason)
