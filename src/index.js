@@ -152,6 +152,7 @@ export default function(url, protocols, WebSocket, options) {
   function onclose(event, emit) {
     clearTimeout(heartbeatTimer)
     event.reconnectDelay = Math.ceil(reconnect())
+    lastOpen = null
     pws.onclose && pws.onclose.apply(pws, arguments)
   }
 
