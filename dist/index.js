@@ -136,8 +136,8 @@
       url = typeof pws.url === 'function' ? pws.url(pws) : pws.url;
       connection = browser
         ? protocols
-          ? new WebSocket(url)
-          : new WebSocket(url, protocols)
+          ? new WebSocket(url, protocols)
+          : new WebSocket(url)
         : new WebSocket(url, protocols, options);
 
       connection.onclose = onclose;
@@ -158,6 +158,7 @@
     function onclose(event, emit) {
       clearTimeout(heartbeatTimer);
       event.reconnectDelay = Math.ceil(reconnect());
+      lastOpen = null;
       pws.onclose && pws.onclose.apply(pws, arguments);
     }
 
