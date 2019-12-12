@@ -209,7 +209,6 @@ export default function(url, protocols, WebSocket, options) {
   }
 
   function close(code, reason) {
-    closed = true
     setTimeout(clean, 0, connection)
 
     const event = closeEvent(code, reason)
