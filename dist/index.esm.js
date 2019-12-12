@@ -209,7 +209,6 @@ function index(url, protocols, WebSocket, options) {
   }
 
   function close(code, reason) {
-    closed = true;
     setTimeout(clean, 0, connection);
 
     var event = closeEvent(code, reason);

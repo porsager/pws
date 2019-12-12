@@ -2,7 +2,7 @@
   typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
   typeof define === 'function' && define.amd ? define(factory) :
   (global = global || self, global.PersistentWebSocket = factory());
-}(this, function () { 'use strict';
+}(this, (function () { 'use strict';
 
   function index(url, protocols, WebSocket, options) {
     if (typeof protocols === 'function') {
@@ -215,7 +215,6 @@
     }
 
     function close(code, reason) {
-      closed = true;
       setTimeout(clean, 0, connection);
 
       var event = closeEvent(code, reason);
@@ -252,4 +251,4 @@
 
   return index;
 
-}));
+})));
