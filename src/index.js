@@ -135,7 +135,7 @@ export default function(url, protocols, WebSocket, options) {
       : new WebSocket(url, protocols, options)
 
     connection.onclose = onclose
-    connection.onerror = onerror
+    connection.onerror = pws.onerror
     connection.onopen = onopen
     connection.onmessage = onmessage
     Object.keys(listenerHandlers).forEach(event => {
@@ -154,14 +154,6 @@ export default function(url, protocols, WebSocket, options) {
     event.reconnectDelay = Math.ceil(reconnect())
     lastOpen = null
     pws.onclose && pws.onclose.apply(pws, arguments)
-  }
-
-  function onerror(event) {
-    if (!event)
-      event = new Error('UnknownError')
-
-    event.reconnectDelay = Math.ceil(reconnect())
-    pws.onerror && pws.onerror.apply(pws, arguments)
   }
 
   function onopen(event) {
