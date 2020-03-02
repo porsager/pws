@@ -213,6 +213,7 @@ export default function(url, protocols, WebSocket, options) {
       onHandlers[event].forEach(handler => connection.off(event, handler))
     })
     connection.close()
+    connection = null
     const event = closeEvent(code, reason)
     onclose(event)
     listenerHandlers.close && listenerHandlers.close.forEach(handler => handler(event))
