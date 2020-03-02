@@ -21,7 +21,7 @@ async function test(o, name, fn, after) {
 
   tests[line] = { fn, line, name }
   promise = promise.then(() => Promise.race([
-    new Promise((resolve, reject) => fn.timer = setTimeout(() => reject('Timed out'), 5000)),
+    new Promise((resolve, reject) => fn.timer = setTimeout(() => reject('Timed out'), 10000)),
     fn(name)
   ]))
     .then(([expected, got]) => {
