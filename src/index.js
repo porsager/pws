@@ -135,8 +135,11 @@ export default function(url, protocols, WebSocket, options) {
         : new WebSocket(url)
       : new WebSocket(url, protocols, options)
 
+    typeof connection.on === 'function'
+      ? connection.on('error', onerror)
+      : (connection.onerror = onerror)
+
     connection.onclose = onclose
-    connection.onerror = pws.onerror
     connection.onopen = onopen
     connection.onmessage = onmessage
     Object.keys(listenerHandlers).forEach(event => {
@@ -155,6 +158,10 @@ export default function(url, protocols, WebSocket, options) {
     pws.onclose && pws.onclose.apply(pws, arguments)
     clearTimeout(heartbeatTimer)
     clearTimeout(openTimer)
+  }
+
+  function onerror() {
+    pws.onerror && pws.onerror.apply(pws, arguments)
   }
 
   function onopen(event) {
