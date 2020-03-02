@@ -34,10 +34,10 @@ export default function(url, protocols, WebSocket, options) {
     , reconnecting = false
     , reconnectTimer = null
     , heartbeatTimer = null
+    , openTimer = null
     , binaryType = null
     , closed = false
-    , lastOpen = null
-    , reconnectDelay
+    , reconnectDelay = 0
 
   const listeners = {}
   const listenerHandlers = {}
@@ -150,17 +150,17 @@ export default function(url, protocols, WebSocket, options) {
       connection.binaryType = binaryType
   }
 
-  function onclose(event, emit) {
-    clearTimeout(heartbeatTimer)
-    event.reconnectDelay = Math.ceil(reconnect())
-    lastOpen = null
+  function onclose(event) {
+    event.reconnectDelay = reconnect()
     pws.onclose && pws.onclose.apply(pws, arguments)
+    clearTimeout(heartbeatTimer)
+    clearTimeout(openTimer)
   }
 
   function onopen(event) {
     pws.onopen && pws.onopen.apply(pws, arguments)
     heartbeat()
-    lastOpen = Date.now()
+    openTimer = setTimeout(() => pws.retries = 0, reconnectDelay || 0)
   }
 
   function onmessage(event) {
@@ -187,30 +187,17 @@ export default function(url, protocols, WebSocket, options) {
     if (reconnecting)
       return reconnectDelay - (Date.now() - reconnecting)
 
-    reconnecting = Date.now()
-    pws.retries = lastOpen && Date.now() - lastOpen > reconnectDelay
-      ? 1
-      : pws.retries + 1
-
-    if (pws.maxRetries && pws.retries >= pws.maxRetries)
+    if (pws.maxRetries && pws.connects >= pws.maxRetries)
       return
 
-    reconnectDelay = pws.nextReconnectDelay(pws.retries)
+    reconnecting = Date.now()
+    reconnectDelay = Math.ceil(pws.nextReconnectDelay(pws.retries++))
     reconnectTimer = setTimeout(connect, reconnectDelay)
 
     return reconnectDelay
   }
 
   function close(code, reason) {
-    setTimeout(clean, 0, connection)
-
-    const event = closeEvent(code, reason)
-    onclose(event)
-    listenerHandlers.close && listenerHandlers.close.forEach(handler => handler(event))
-    onHandlers.close && onHandlers.close.forEach(handler => handler(code, reason, reconnectDelay))
-  }
-
-  function clean(connection) {
     connection.onclose = connection.onopen = connection.onerror = connection.onmessage = null
     Object.keys(listenerHandlers).forEach(event => {
       listenerHandlers[event].forEach(handler => connection.removeEventListener(event, handler))
@@ -219,6 +206,10 @@ export default function(url, protocols, WebSocket, options) {
       onHandlers[event].forEach(handler => connection.off(event, handler))
     })
     connection.close()
+    const event = closeEvent(code, reason)
+    onclose(event)
+    listenerHandlers.close && listenerHandlers.close.forEach(handler => handler(event))
+    onHandlers.close && onHandlers.close.forEach(handler => handler(code, reason, reconnectDelay))
   }
 
   function closeEvent(code, reason) {
