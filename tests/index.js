@@ -62,5 +62,5 @@ t('reconnects', s(async(s) => {
         : s.server.s.close()
     }
   })
-  return [3, 3]
+  return [3, count]
 }))
