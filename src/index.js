@@ -116,20 +116,19 @@ export default function(url, protocols, WebSocket, options) {
   return pws
 
   function connect(url) {
-    closed = false
+    closed = reconnecting = false
     clearTimeout(reconnectTimer)
-
-    if (typeof url === 'string')
-      pws.url = url
 
     if (connection && connection.readyState !== 3) {
       close(4665, 'Manual connect initiated')
       return connect(url)
     }
 
-    reconnecting = false
+    url && (pws.url = url)
+    url = typeof pws.url === 'function'
+      ? pws.url(pws)
+      : pws.url
 
-    url = typeof pws.url === 'function' ? pws.url(pws) : pws.url
     connection = browser
       ? protocols
         ? new WebSocket(url, protocols)
