@@ -17,6 +17,9 @@
     "build": "rollup -c",
     "prepublishOnly": "npm run build"
   },
+  "files": [
+    "dist"
+  ],
   "author": "Rasmus Porsager <rasmus@porsager.com>",
   "license": "WTFPL",
   "homepage": "https://github.com/porsager/pws#readme",
