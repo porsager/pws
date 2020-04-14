@@ -44,10 +44,12 @@ t('onclose', s((s, done) => (
   s.onclose = done,
   s.onopen = () => s.server.s.close()
 )))
+
 t('on(close', s((s, done) => (
   s.on('close', done),
   s.onopen = () => s.server.s.close()
 )))
+
 t('addEventListener close', s((s, done) => (
   s.addEventListener('close', done),
   s.onopen = () => s.server.s.close()
