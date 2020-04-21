@@ -21,7 +21,7 @@ export default function(url, protocols, WebSocket, options) {
     WebSocket = WebSocket || window.WebSocket
     typeof window !== 'undefined'
       && typeof window.addEventListener === 'function'
-      && window.addEventListener('online', connect)
+      && window.addEventListener('online', () => connect())
   }
 
   if (!WebSocket)
