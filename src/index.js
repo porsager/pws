@@ -73,7 +73,7 @@ export default function(url, protocols, WebSocket, options) {
     close: function() {
       clearTimeout(reconnectTimer)
       closed = true
-      connection.close.apply(connection, arguments)
+      connection && connection.close.apply(connection, arguments)
     },
     onopen: options.onopen,
     onmessage: options.onmessage,
