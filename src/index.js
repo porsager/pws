@@ -210,7 +210,7 @@ export default function(url, protocols, WebSocket, options) {
       listenerHandlers[event].forEach(handler => connection.removeEventListener(event, handler))
     })
     Object.keys(onHandlers).forEach(event => {
-      onHandlers[event].forEach(handler => connection.off(event, handler))
+      onHandlers[event].forEach(handler => connection.removeListener(event, handler))
     })
     connection.close()
     connection = null
