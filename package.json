@@ -1,6 +1,6 @@
 {
   "name": "pws",
-  "version": "5.0.2",
+  "version": "6.0.0",
   "description": "A Persistent WebSocket wrapper",
   "type": "module",
   "module": "pws.js",
