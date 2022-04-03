@@ -1,18 +1,18 @@
-const Pws = require('../dist/index.js')
-    , ws = require('ws')
-    , { t, ot } = require('./test')
+import Pws from './pws.js'
+import { WebSocketServer, WebSocket } from 'ws'
+import t from 'fantestic'
 
 function s(fn) {
-  return function(name) {
+  return function() {
     let socket
       , server
 
     return new Promise((resolve, reject) => {
-      server = new ws.Server({ port: 0 })
+      server = new WebSocketServer({ port: 0 })
       server.on('connection', socket => server.s = socket)
       server.on('error', reject)
       server.on('listening', () => {
-        socket = Pws('ws://localhost:' + server.address().port, ws)
+        socket = Pws('ws://localhost:' + server.address().port, WebSocket)
         socket.server = server
         fn.length === 2
           ? fn(socket, () => resolve([true, true]))
@@ -55,7 +55,7 @@ t('addEventListener close', s((s, done) => (
   s.onopen = () => s.server.s.close()
 )))
 
-t('reconnects', s(async(s) => {
+t('reconnects', { timeout: 8 }, s(async(s) => {
   let count = 0
   await new Promise(resolve => {
     s.onopen = () => {

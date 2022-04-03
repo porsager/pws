@@ -2,8 +2,14 @@
   "name": "pws",
   "version": "5.0.2",
   "description": "A Persistent WebSocket wrapper",
-  "main": "dist/index.js",
-  "module": "dist/index.esm.js",
+  "type": "module",
+  "module": "pws.js",
+  "browser": "pws.umd.js",
+  "main": "pws.umd.js",
+  "exports": {
+    "import": "./pws.js",
+    "default": "./pws.umd.js"
+  },
   "repository": "porsager/pws",
   "keywords": [
     "websocket",
@@ -13,20 +19,18 @@
     "timeout"
   ],
   "scripts": {
-    "test": "npm run build && node tests",
-    "build": "rollup -c",
-    "prepublishOnly": "npm run build"
+    "test": "node test.js",
+    "prepublishOnly": "npm run build",
+    "build": "node -e 'fs.writeFileSync(\"pws.umd.js\",\";(function(g){\"+fs.readFileSync(\"pws.js\",\"utf8\").replace(\"export default pws\",`typeof exports===\"object\"&&typeof module\\!==\"undefined\"?module.exports=pws:((g?g:self).pws=pws);`) + \"})(this);\")'"
   },
-  "files": [
-    "dist"
-  ],
   "author": "Rasmus Porsager <rasmus@porsager.com>",
   "license": "WTFPL",
   "homepage": "https://github.com/porsager/pws#readme",
+  "bugs": {
+    "url": "https://github.com/porsager/pws/issues"
+  },
   "devDependencies": {
-    "rollup": "2.6.1",
-    "rollup-plugin-buble": "0.19.8",
-    "rollup-plugin-terser": "5.3.0",
-    "ws": "7.2.3"
+    "fantestic": "0.0.3",
+    "ws": "8.5.0"
   }
 }

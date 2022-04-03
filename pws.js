@@ -1,4 +1,6 @@
-export default function(url, protocols, WebSocket, options) {
+export default pws
+
+function pws(url, protocols, WebSocket, options) {
   if (typeof protocols === 'function') {
     if (typeof WebSocket === 'object')
       options = WebSocket
@@ -78,7 +80,8 @@ export default function(url, protocols, WebSocket, options) {
     onopen: options.onopen,
     onmessage: options.onmessage,
     onclose:  options.onclose,
-    onerror: options.onerror
+    onerror: options.onerror,
+    options
   }
 
   const on = (method, events, handlers) => (event, fn, options) => {
@@ -164,13 +167,13 @@ export default function(url, protocols, WebSocket, options) {
     pws.onerror && pws.onerror.apply(pws, arguments)
   }
 
-  function onopen(event) {
+  function onopen() {
     pws.onopen && pws.onopen.apply(pws, arguments)
     heartbeat()
     openTimer = setTimeout(() => pws.retries = 0, reconnectDelay || 0)
   }
 
-  function onmessage(event) {
+  function onmessage() {
     pws.onmessage && pws.onmessage.apply(pws, arguments)
     heartbeat()
   }
