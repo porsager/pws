@@ -167,13 +167,13 @@ function pws(url, protocols, WebSocket, options) {
     pws.onerror && pws.onerror.apply(pws, arguments)
   }
 
-  function onopen(event) {
+  function onopen() {
     pws.onopen && pws.onopen.apply(pws, arguments)
     heartbeat()
     openTimer = setTimeout(() => pws.retries = 0, reconnectDelay || 0)
   }
 
-  function onmessage(event) {
+  function onmessage() {
     pws.onmessage && pws.onmessage.apply(pws, arguments)
     heartbeat()
   }
