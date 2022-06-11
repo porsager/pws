@@ -31,6 +31,6 @@
   },
   "devDependencies": {
     "fantestic": "0.0.3",
-    "ws": "8.5.0"
+    "ws": "8.8.0"
   }
 }
