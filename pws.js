@@ -51,14 +51,14 @@ function pws(url, protocols, WebSocket, options) {
     OPEN      : 1,
     CLOSING   : 2,
     CLOSED    : 3,
-    get readyState() { return connection.readyState },
-    get protocol() { return connection.protocol },
-    get extensions() { return connection.extensions },
-    get bufferedAmount() { return connection.bufferedAmount },
-    get binaryType() { return connection.binaryType },
+    get readyState() { return connection ? connection.readyState : 0 },
+    get protocol() { return connection ? connection.protocol : '' },
+    get extensions() { return connection ? connection.extensions : '' },
+    get bufferedAmount() { return connection ? connection.bufferedAmount : 0 },
+    get binaryType() { return connection ? connection.binaryType : 'blob' },
     set binaryType(type) {
       binaryType = type
-      connection.binaryType = type
+      connection && (connection.binaryType = type)
     },
     connect,
     url,
@@ -70,6 +70,9 @@ function pws(url, protocols, WebSocket, options) {
       return Math.min((1 + Math.random()) * Math.pow(1.5, retries) * 1000, pws.maxTimeout)
     },
     send: function() {
+      if (!connection)
+        throw new Error('InvalidAccessError')
+
       connection.send.apply(connection, arguments)
     },
     close: function() {
@@ -122,7 +125,7 @@ function pws(url, protocols, WebSocket, options) {
     closed = reconnecting = false
     clearTimeout(reconnectTimer)
 
-    if (connection && connection.readyState !== 3) {
+    if (connection && connection.readyState !== pws.CLOSED) {
       close(4665, 'Manual connect initiated')
       return connect(url)
     }
