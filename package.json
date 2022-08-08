@@ -8,7 +8,7 @@
   "main": "pws.umd.js",
   "exports": {
     "import": "./pws.js",
-    "default": "./pws.umd.js"
+    "default": "./umd/pws.js"
   },
   "repository": "porsager/pws",
   "keywords": [
@@ -21,7 +21,7 @@
   "scripts": {
     "test": "node test.js",
     "prepublishOnly": "npm run build",
-    "build": "node -e 'fs.writeFileSync(\"pws.umd.js\",\";(function(g){\"+fs.readFileSync(\"pws.js\",\"utf8\").replace(\"export default pws\",`typeof exports===\"object\"&&typeof module\\!==\"undefined\"?module.exports=pws:((g?g:self).pws=pws);`) + \"})(this);\")'"
+    "build": "node -e 'fs.writeFileSync(\"umd/pws.js\",\";(function(g){\"+fs.readFileSync(\"pws.js\",\"utf8\").replace(\"export default pws\",`typeof exports===\"object\"&&typeof module\\!==\"undefined\"?module.exports=pws:((g?g:self).pws=pws);`) + \"})(this);\")'"
   },
   "author": "Rasmus Porsager <rasmus@porsager.com>",
   "license": "WTFPL",

@@ -40,6 +40,7 @@ function pws(url, protocols, WebSocket, options) {
     , binaryType = null
     , closed = false
     , reconnectDelay = 0
+    , attempts = 0
 
   const listeners = {}
   const listenerHandlers = {}
@@ -116,12 +117,12 @@ function pws(url, protocols, WebSocket, options) {
   pws.off = off('off', ons, onHandlers)
   pws.once = (event, fn) => pws.on(event, fn, { once: true })
 
-  if (url)
-    connect()
+  url && Promise.resolve().then(connect)
 
   return pws
 
-  function connect(url) {
+  async function connect(url) {
+    const attempt = ++attempts
     closed = reconnecting = false
     clearTimeout(reconnectTimer)
 
@@ -132,8 +133,11 @@ function pws(url, protocols, WebSocket, options) {
 
     url && (pws.url = url)
     url = typeof pws.url === 'function'
-      ? pws.url(pws)
+      ? (await pws.url(pws))
       : pws.url
+
+    if (attempt !== attempts)
+      return
 
     connection = browser
       ? protocols
